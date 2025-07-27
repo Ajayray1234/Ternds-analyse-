@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Terand Number Prediction</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .container {
+      padding: 15px;
+      box-sizing: border-box;
+    }
+    pre, #countdown {
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-y: auto;
+      max-height: 55vh;
+      margin-bottom: 10px;
+    }
+    #countdown {
+      color: #0ff;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    .green { color: #0f0; }
+    .red { color: #f00; }
+    .blue { color: #00f; }
+    .yellow { color: #ff0; }
+    .cyan { color: #0ff; }
+    .magenta { color: #f0f; }
+    .white { color: #fff; }
+    .gray { color: #888; }
+
+    .game-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .game-buttons button {
+      flex: 1 1 45%;
+      padding: 10px;
+      font-size: 14px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
+
+    #gameFrame {
+      width: 100%;
+      height: 300px;
+      border: 2px solid #333;
+      border-radius: 10px;
+      display: block;
+    }
+
+    #draggableOutput {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: #222;
+      padding: 10px 15px;
+      border: 2px solid #555;
+      border-radius: 10px;
+      color: #0ff;
+      font-weight: bold;
+      cursor: move;
+      display: none;
+      z-index: 9999;
+    }
+
+    @media screen and (max-width: 600px) {
+      pre, #countdown, .game-buttons button {
+        font-size: 13px;
+      }
+    }
+
+    .hidden { display: none !important; }
+
+    .full-iframe {
+      position: fixed !important;
+      top: 0; left: 0;
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 0 !important;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="mainContainer">
+  <pre id="log"> 910 ternds by color bhsi Prediction...\n</pre>
+  <div id="countdown"></div>
+  <div class="game-buttons" id="urlButtons">
+    <button onclick="openGame('http://www.tashanwin.win/#/register?invitationCode=876461805111')">Tashanwin game</button>
+    <button onclick="openGame('https://www.82lottery3.com/#/register?invitationCode=135811209286')">82 lottery game</button>
+    <button onclick="openGame('https://www.bigmumbai.top/#/register?invitationCode=576881883687')">Big Mumbai game</button>
+    <button onclick="openGame('https://www.dmwin2.com/#/register?invitationCode=45354756450')">DM win game</button>
+    <button onclick="openGame('https://www.jalwa.fun/#/register?invitationCode=822821454349')">Jaluwa game</button>
+    <button onclick="openGame('https://bdgwinbet5.com//#/register?invitationCode=717181845945')">Bdg win game</button>
+    <button onclick="openGame('https://bdggame4.com//#/register?invitationCode=231286547982')">Bdg game</button>
+  </div>
+  <iframe id="gameFrame" src="" title="Game iframe will load here"></iframe>
+</div>
+
+<div id="draggableOutput">Select a game URL</div>
+
+<script>
+function openGame(url) {
+  document.getElementById("log").classList.add("hidden");
+  document.getElementById("countdown").classList.add("hidden");
+  document.getElementById("urlButtons").classList.add("hidden");
+  const iframe = document.getElementById("gameFrame");
+  iframe.classList.add("full-iframe");
+  iframe.src = url;
+  document.getElementById("draggableOutput").style.display = "block";
+  document.getElementById("draggableOutput").innerText = "Loading...";
+}
+
+const draggable = document.getElementById('draggableOutput');
+let isDragging = false, offsetX = 0, offsetY = 0;
+
+draggable.addEventListener('mousedown', e => {
+  isDragging = true;
+  offsetX = e.offsetX;
+  offsetY = e.offsetY;
+});
+document.addEventListener('mouseup', () => isDragging = false);
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  draggable.style.left = (e.clientX - offsetX) + 'px';
+  draggable.style.top = (e.clientY - offsetY) + 'px';
+});
+draggable.addEventListener('touchstart', e => {
+  isDragging = true;
+  let touch = e.touches[0];
+  offsetX = touch.clientX - draggable.offsetLeft;
+  offsetY = touch.clientY - draggable.offsetTop;
+}, { passive: true });
+document.addEventListener('touchend', () => isDragging = false, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (!isDragging) return;
+  let touch = e.touches[0];
+  draggable.style.left = (touch.clientX - offsetX) + 'px';
+  draggable.style.top = (touch.clientY - offsetY) + 'px';
+  e.preventDefault();
+}, { passive: false });
+
+const API_URL = "https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json";
+const TERAND_LIST_URL = "https://raw.githubusercontent.com/Ajayray1234/terand-data/main/terandslist3.txt";
+const API_RESULT_COUNT = 100;
+const TARGET_DATA_COUNT = 15;
+
+let allResults = [];
+let currentTerand = null;
+let currentIndex = 0;
+
+function log(text, css = "") {
+  const logBox = document.getElementById("log");
+  logBox.innerHTML += `<span class="${css}">${text}</span>\n`;
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+function determineSize(num) {
+  try {
+    return parseInt(num) > 4 ? "Big" : "Small";
+  } catch {
+    return "Unknown";
+  }
+}
+
+async function fetchLatestResults(n = API_RESULT_COUNT) {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    const entries = data.data.list.slice(0, n).reverse();
+    return entries.map(entry => ({
+      issue: entry.issueNumber.toString(),
+      number: entry.number.toString(),
+      color: entry.color.toString()
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+function extractSizePattern(results) {
+  return results.map(r => determineSize(r.number));
+}
+
+async function loadTerandPatterns() {
+  const res = await fetch(TERAND_LIST_URL);
+  const txt = await res.text();
+  const lines = txt.split("\n");
+  const patterns = [];
+
+  lines.forEach(line => {
+    if (!line.includes("->")) return;
+    try {
+      const [left, right] = line.split("->");
+      const numberSequence = left.split(".")[1].trim();
+      const sizePattern = right.trim().split("-");
+      patterns.push([numberSequence, sizePattern]);
+    } catch {}
+  });
+  return patterns;
+}
+
+function matchTerandPattern(sizes, terandPatterns) {
+  for (let length = sizes.length; length > 1; length--) {
+    const recent = sizes.slice(-length);
+    for (const [_, sizePattern] of terandPatterns) {
+      if (sizePattern.length > length && sizePattern.slice(0, length).join() === recent.join()) {
+        log(`✅ Matched Terand (${length}): ${recent.join("-")}`, "green");
+        return [sizePattern, length];
+      }
+    }
+  }
+  return [null, null];
+}
+
+function matchNumberPatternAndPredict(results, patterns, length = 3) {
+  if (results.length < length) return null;
+  const recent = results.slice(-length).map(r => r.number).join("");
+  for (const [numberStr, sizePattern] of patterns) {
+    const pos = numberStr.indexOf(recent);
+    if (pos !== -1 && numberStr.length > 3) {
+      const digit = numberStr[3];
+      const prediction = determineSize(digit);
+      log(`🔢 Number Pattern Match: ${recent} → Index 3: ${digit} → Prediction: ${prediction}`, "white");
+      return prediction;
+    }
+  }
+  log(`🔍 No match found for number sequence: ${recent}`, "magenta");
+  return null;
+}
+
+async function getCurrentIssue() {
+  const latest = await fetchLatestResults(1);
+  return latest.length ? latest[0].issue : null;
+}
+
+async function waitForNewResult(lastIssue) {
+  const countdownBox = document.getElementById("countdown");
+  let remaining = 60;
+
+  while (true) {
+    countdownBox.textContent = `⏳ Countdown: ${remaining} seconds remaining...`;
+    await new Promise(r => setTimeout(r, 1000));
+    remaining--;
+
+    const issue = await getCurrentIssue();
+    if (issue && issue !== lastIssue) {
+      countdownBox.textContent = "";
+      return issue;
+    }
+
+    if (remaining <= 0) {
+      log("🔄 Countdown expired. Rechecking...", "gray");
+      remaining = 60;
+    }
+  }
+}
+
+async function main() {
+  const terandPatterns = await loadTerandPatterns();
+  allResults = await fetchLatestResults(API_RESULT_COUNT);
+
+  while (allResults.length < TARGET_DATA_COUNT) {
+    log(`⏳ Collecting data: ${allResults.length}/${TARGET_DATA_COUNT}`, "yellow");
+    const lastIssue = allResults.length ? allResults[allResults.length - 1].issue : null;
+    await waitForNewResult(lastIssue);
+    const newData = await fetchLatestResults(TARGET_DATA_COUNT);
+    const seen = new Set(allResults.map(r => r.issue));
+    newData.forEach(r => {
+      if (!seen.has(r.issue)) {
+        allResults.push(r);
+        seen.add(r.issue);
+      }
+    });
+    allResults.sort((a, b) => a.issue.localeCompare(b.issue));
+  }
+
+  while (true) {
+    const currentIssue = allResults[allResults.length - 1].issue;
+    const latestSizes = extractSizePattern(allResults);
+    log(`\n📌 Current Issue: ${currentIssue}`, "cyan");
+    log(`🧠 Latest Sizes: ${latestSizes.slice(-5).join(", ")}`, "yellow");
+
+    if (!currentTerand) {
+      const [matched, index] = matchTerandPattern(latestSizes, terandPatterns);
+      if (matched) {
+        currentTerand = matched;
+        currentIndex = index;
+        log(`🔒 Locked Terand: ${matched.join("-")} starting from index ${index}`, "green");
+      } else {
+        log("❌ No matching terand. Will use number pattern if available.", "red");
+      }
+    }
+
+    const numberBasedPrediction = matchNumberPatternAndPredict(allResults, terandPatterns, 3);
+
+    let finalPrediction = null;
+    if (currentTerand && currentIndex < currentTerand.length) {
+      finalPrediction = currentTerand[currentIndex];
+      log(`(Locked Terand): ${finalPrediction}`, "yellow");
+    } else if (numberBasedPrediction) {
+      finalPrediction = numberBasedPrediction;
+      log(`(Number Pattern): ${finalPrediction}`, "yellow");
+    }
+
+    document.getElementById("draggableOutput").style.display = "block";
+    document.getElementById("draggableOutput").innerText =
+      finalPrediction ? `🥀🥀 ${finalPrediction.toUpperCase()} 🥀🥀` : `🔄 Waiting for pattern...`;
+
+    const newIssue = await waitForNewResult(currentIssue);
+    const newResult = (await fetchLatestResults(1))[0];
+    const actualSize = determineSize(newResult.number);
+    log(`\n📥 New Result: Issue ${newResult.issue} → Number: ${newResult.number} → Size: ${actualSize}`, "green");
+
+    if (!allResults.find(r => r.issue === newResult.issue)) {
+      allResults.push(newResult);
+    }
+
+    if (currentTerand && currentIndex < currentTerand.length) {
+      if (finalPrediction && finalPrediction.toLowerCase() === actualSize.toLowerCase()) {
+        log("✅ Terand Prediction Correct", "green");
+        currentIndex++;
+      } else {
+        log("❌ Terand Prediction Wrong. Resetting Terand.", "red");
+        currentTerand = null;
+        currentIndex = 0;
+      }
+    } else if (!currentTerand) {
+      if (finalPrediction && finalPrediction.toLowerCase() === actualSize.toLowerCase()) {
+        log("✅ Number Pattern Prediction Correct", "green");
+      } else {
+        log("❌ Number Pattern Prediction Wrong", "red");
+      }
+    }
+
+    if (currentTerand && currentIndex >= currentTerand.length) {
+      log("🧩 Reached end of terand. Resetting.", "magenta");
+      currentTerand = null;
+      currentIndex = 0;
+    }
+  }
+}
+
+main();
+</script>
+</body>
+</html>
